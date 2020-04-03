@@ -1,0 +1,2 @@
+rootProject.name='ConflictDemo'
+include ':app'

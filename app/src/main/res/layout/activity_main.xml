@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:id="@+id/container"
+    android:orientation="vertical"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+    <Button
+        android:layout_width="match_parent"
+        android:onClick="go2Vertical"
+        android:background="#aa1acaac"
+        android:layout_marginTop="50dp"
+        android:textColor="@android:color/white"
+        android:text="方向垂直的冲突处理"
+        android:layout_height="wrap_content"/>
+    <Button
+        android:layout_width="match_parent"
+        android:onClick="go2Parallel"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="50dp"
+        android:background="#aa1acaac"
+        android:text="方向一致的冲突处理"
+        android:layout_height="wrap_content"/>
+
+</LinearLayout>
