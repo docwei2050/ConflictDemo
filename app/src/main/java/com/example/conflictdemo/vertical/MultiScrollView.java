@@ -58,7 +58,7 @@ public class MultiScrollView extends ViewGroup {
 
     // 这里注意一下：父ViewGroup只能消费左右move事件，
      //每一次事件都会走父ViewGroup的onInterceptTouchEvent
-    // 所以必须只能在onInterceptTouchEvent获取down事件
+    // 所以必须在onInterceptTouchEvent获取down事件
     // 保存按下的点的位置给ViewGroup的onTouchEvent中的move用
     private float lastDownX;
     private float lastDownY;
@@ -90,7 +90,7 @@ public class MultiScrollView extends ViewGroup {
                         }
                     }
                 }
-            default:;
+            default:
                 break;
         }
         return false;
