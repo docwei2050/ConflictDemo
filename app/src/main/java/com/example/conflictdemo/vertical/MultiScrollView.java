@@ -9,14 +9,12 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.OverScroller;
-import android.widget.Scroller;
 
 public class MultiScrollView extends ViewGroup {
 
-    private float mLastX;
     private int mChildWidth;
     private int mChildCount;
-    private  OverScroller mScroller;
+    private OverScroller mScroller;
     private VelocityTracker mVelocityTracker;
     private int touchSlop;
 
@@ -57,64 +55,61 @@ public class MultiScrollView extends ViewGroup {
         intercepted = true;
     }*/
 
+
+    // 这里注意一下：父ViewGroup只能消费左右move事件，
+     //每一次事件都会走父ViewGroup的onInterceptTouchEvent
+    // 所以必须只能在onInterceptTouchEvent获取down事件
+    // 保存按下的点的位置给ViewGroup的onTouchEvent中的move用
     private float lastDownX;
     private float lastDownY;
-
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
+        final int actionIndex = ev.getActionIndex();
         switch (ev.getActionMasked()) {
-            case MotionEvent.ACTION_DOWN:
-                lastDownX = ev.getX();
-                lastDownY = ev.getY();
-                if (!mScroller.isFinished()) {
-                    mScroller.abortAnimation();
-                    return true;
-                }
-                break;
-            case MotionEvent.ACTION_MOVE:
-                //如果是左右滑动就拦截
-                float moveX = ev.getX();
-                float moveY = ev.getY();
-
-                float deltaX = moveX - lastDownX;
-                float deltaY = moveY - lastDownY;
-                //左右滑动
-                Log.e("scrollView  ", "dispatchTouchEvent: " + Math.abs(deltaX) + "-----lllll" + Math.abs(deltaY));
-                if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                    Log.e("scrollView", "左右滑动");
-                    return true;
-                }
-                lastDownX = moveX;
-                lastDownY = moveY;
-                break;
-        }
-        return false;
-    }
-
-    private int activePointer;//记录活动的手指(PointerId)
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        final int actionIndex = event.getActionIndex();
-        mVelocityTracker.addMovement(event);
-        switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 if (!mScroller.isFinished()) {
                     mScroller.abortAnimation();
                 }
             case MotionEvent.ACTION_POINTER_DOWN:
                 //第一次按下或者后续按下，都将其作为活动的手指
-                activePointer = event.getPointerId(actionIndex);
-                final int pointerIndex = event.findPointerIndex(activePointer);
-                mLastX = event.getX(pointerIndex);
+                activePointer = ev.getPointerId(actionIndex);
+                final int pointerIndex = ev.findPointerIndex(activePointer);
+                lastDownX = ev.getX(pointerIndex);
+                lastDownY = ev.getY(pointerIndex);
                 break;
+            case MotionEvent.ACTION_MOVE:
+                for (int i = 0; i < ev.getPointerCount(); i++) {
+                    if (ev.getPointerId(i) == activePointer) {
+                        float x = ev.getX(ev.findPointerIndex(activePointer));
+                        float y = ev.getY(ev.findPointerIndex(activePointer));
+                        float deltaX = x - lastDownX;
+                        float deltaY = y - lastDownY;
+                        //左右滑动
+                        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                            return true;
+                        }
+                    }
+                }
+            default:;
+                break;
+        }
+        return false;
+    }
+
+    private int activePointer;//记录活动的手指(PointerId)
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        final int actionIndex = event.getActionIndex();
+        mVelocityTracker.addMovement(event);
+        switch (event.getActionMasked()) {
             case MotionEvent.ACTION_MOVE:
                 //为啥要遍历，是因为这里可能会出现越界异常//pointerIndex out of range
                 for (int i = 0; i < event.getPointerCount(); i++) {
                     if (event.getPointerId(i) == activePointer) {
                         float x = event.getX(event.findPointerIndex(activePointer));
-                        scrollBy(-(int) (x - mLastX) / 3, 0);
-                        mLastX = x;
+                        scrollBy(-(int) (x - lastDownX) / 3, 0);
+                        lastDownX = x;
+                        lastDownY = event.getY(event.findPointerIndex(activePointer));
                     }
                 }
                 break;
@@ -122,7 +117,6 @@ public class MultiScrollView extends ViewGroup {
                 //如果抬起的手指是活动的手指，那么就要更新活动的手指
                 if (event.getPointerId(actionIndex) == activePointer && event.getPointerCount() > 1) {
                     //如果当前的点是0，就选择1，因为至少有一个手指在View上 ,actionIndex存在补位机制
-
                     int newIndex;
                     if (actionIndex == event.getPointerCount() - 1) {
                         newIndex = event.getPointerCount() - 2;
@@ -132,7 +126,7 @@ public class MultiScrollView extends ViewGroup {
                     activePointer = event.getPointerId(newIndex);
                     final int newPointerIndex = event.findPointerIndex(activePointer);
                     //pointerIndex out of range
-                    mLastX = event.getX(newPointerIndex);
+                    lastDownX = event.getX(newPointerIndex);
                 }
                 break;
             case MotionEvent.ACTION_UP:
